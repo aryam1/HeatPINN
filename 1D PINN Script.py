@@ -9,7 +9,6 @@ import time
 import pandas as pd
 from torch.profiler import profile, record_function, ProfilerActivity, schedule
 
-
 class Network(nn.Module):
 
     def __init__(self, input, width, depth, output):
@@ -263,7 +262,7 @@ class Network(nn.Module):
     def storeData(self, epoch):
         X = torch.linspace(-1, 1, 100).to(device)
         T = torch.linspace(0, 10, 100).to(device)
-        X_grid, T_grid = torch.meshgrid(X, T)
+        X_grid, T_grid = torch.meshgrid(X, T, indexing="xy")
 
         Temp = (
             (self.forward(X_grid.flatten().unsqueeze(1), T_grid.flatten().unsqueeze(1)))
@@ -458,7 +457,6 @@ class Network(nn.Module):
 
         fig.show()
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # nn seed
 torch.manual_seed(987)
@@ -467,24 +465,16 @@ torch.manual_seed(987)
 pinn = Network(2, 6, 128, 1).to(device)
 
 # training things
-epochs_max = 10000
+epochs_max = 1000
 lrate = 1e-4
 N = 10000
 
+# def main():
+pinn.train(epochs_max, N, 'Adam', lrate)
+pinn.train(epochs_max*2, N, 'LBFGS')
 
-def trace_handler(p):
-    output = p.key_averages().table(sort_by="self_cuda_time_total", row_limit=10)
-    print(output)
-    p.export_chrome_trace(".traces/trace_" + str(p.step_num) + ".json")
-
-
-with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],schedule=torch.profiler.schedule(wait=40,warmup=10,active=10), on_trace_ready=trace_handler) as p:
-    with record_function("ADAM Training"):
-        pinn.train(p,epochs_max, N, 'Adam', lrate)
-    with record_function("LBFGS Training"):
-        pinn.train(p,epochs_max*2, N, 'LBFGS')
-
-# pinn.setPresentationMode(True)
-# pinn.plotEpochs()
-# pinn.plotIC()
-# pinn.plotLoss()
+# with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True, with_stack=True) as p:
+#     with record_function("ADAM Training"):
+#         pinn.train(epochs_max, N, 'Adam', lrate)
+#     with record_function("LBFGS Training"):
+#         pinn.train(epochs_max*1.5, N, 'LBFGS')
