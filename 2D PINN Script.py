@@ -17,11 +17,11 @@ class Network(nn.Module):
         super().__init__()
 
         # activation function
-        activation = nn.LeakyReLU
+        activation = nn.Tanh
 
         # input layer
         self.input = nn.Linear(3, depth)
-        init.kaiming_normal_(self.input.weight,mode='fan_out',nonlinearity='leaky_relu')
+        init.kaiming_normal_(self.input.weight,nonlinearity='tanh')
 
         # hidden layers
         self.hidden = nn.Sequential(
@@ -33,7 +33,7 @@ class Network(nn.Module):
 
         for layer in self.hidden.children():
             if isinstance(layer, nn.Linear):
-                init.kaiming_normal_(layer.weight,mode='fan_out',nonlinearity='leaky_relu')
+                init.kaiming_normal_(layer.weight,nonlinearity='tanh')
 
         # output layer
         self.output = nn.Linear(depth, 1)
